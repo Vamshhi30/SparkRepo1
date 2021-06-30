@@ -23,6 +23,9 @@ object SparkDSL1 {
 						//Txns_filter.coalesce(1).write.partitionBy("spendby").format("parquet").mode("overwrite").save("file:///D:/D Data/ResultDir/Txns_Parquet")
 
 						//writing filtered data as avro
-						Txns_filter.coalesce(1).write.format("com.databricks.spark.avro").mode("overwrite").save("file:///D:/D Data/ResultDir/Txns_avro")
+						//Txns_filter.coalesce(1).write.format("com.databricks.spark.avro").mode("overwrite").save("file:///D:/D Data/ResultDir/Txns_avro")
+
+						//writing filtered data as xml
+						Txns_filter.coalesce(1).write.format("com.databricks.spark.xml").option("rootTag","Transactions").option("rowTag","Transaction").mode("overwrite").save("file:///D:/D Data/ResultDir/Txns_xml")		
 		}
 }
