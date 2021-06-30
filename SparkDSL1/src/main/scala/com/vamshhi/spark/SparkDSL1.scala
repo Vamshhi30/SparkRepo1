@@ -20,6 +20,9 @@ object SparkDSL1 {
 						Txns_filter.show()
 
 						//writing filtered data as parquet
-						Txns_filter.coalesce(1).write.partitionBy("spendby").format("parquet").mode("overwrite").save("file:///D:/D Data/ResultDir/Txns_Parquet")
+						//Txns_filter.coalesce(1).write.partitionBy("spendby").format("parquet").mode("overwrite").save("file:///D:/D Data/ResultDir/Txns_Parquet")
+
+						//writing filtered data as avro
+						Txns_filter.coalesce(1).write.format("com.databricks.spark.avro").mode("overwrite").save("file:///D:/D Data/ResultDir/Txns_avro")
 		}
 }
