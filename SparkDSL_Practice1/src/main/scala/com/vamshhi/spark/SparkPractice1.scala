@@ -2,7 +2,6 @@ package com.vamshhi.spark
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
-import org.apache.hadoop.hdfs.server.namenode.INodeReference.WithCount
 
 object SparkPractice1 
 {
