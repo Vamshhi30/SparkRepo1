@@ -28,5 +28,9 @@ object SparkDSL2 {
 						//Operation 3
 						val df4 = df3.filter(col("product") like("Weightlifting%"))
 						df4.show()
+
+						//DF.selectExpr() API:
+						val txns_df1 = txn_data.selectExpr("txnno","split(txndate,'-')[2] as year","category","product")
+						txns_df1.show()
 		}
 }
