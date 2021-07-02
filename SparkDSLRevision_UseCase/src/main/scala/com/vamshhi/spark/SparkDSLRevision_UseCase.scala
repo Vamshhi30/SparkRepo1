@@ -37,7 +37,7 @@ def main(args:Array[String]):Unit =
 				println()
 
 				// 3.Read file1 as an rdd and filter gymnastics rows
-				val file1 = sc.textFile("file:///C:/Data/rev_data/file1.txt")
+				val file1 = sc.textFile(args(0))
 				val cat_filter = file1.filter(x=>x.contains("Gymnastics"))
 				cat_filter.take(10).foreach(println)
 
@@ -51,7 +51,7 @@ def main(args:Array[String]):Unit =
 				println()
 
 				//5.Read file2 , convert it row rdd and  filter last index equals Cash-Completed
-				val file2 = sc.textFile("file:///C:/Data/rev_data/file2.txt")
+				val file2 = sc.textFile(args(1))
 				val row_rdd = file2.map(x=>x.split(",")).map(x=>Row(x(0),x(1),x(2),x(3),x(4),x(5),x(6),x(7),x(8)))
 				val spendby_filter = row_rdd.filter(x=>x(8).toString().contains("cash"))
 				spendby_filter.take(10).foreach(println)
@@ -82,22 +82,22 @@ def main(args:Array[String]):Unit =
 
 				//7.Read file 3 as csv with header true and inferschema and Show
 
-				val csv_DF = spark.read.format("csv").option("header","true").option("inferschema","true").load("file:///C:/Data/rev_data/file3.txt").select(Col_List.map(col):_*)
+				val csv_DF = spark.read.format("csv").option("header","true").option("inferschema","true").load(args(2)).select(Col_List.map(col):_*)
 				csv_DF.show()
 
 				//8.Read file 4 as json and file 5 as parquet and show both the dataframe?
-				val json_DF = spark.read.format("json").load("file:///C:/Data/rev_data/file4.json").select(Col_List.map(col):_*)
+				val json_DF = spark.read.format("json").load(args(3)).select(Col_List.map(col):_*)
 				json_DF.show()
 
 				println()
 
-				val parquet_DF = spark.read.format("parquet").load("file:///C:/Data/rev_data/file5.parquet").select(Col_List.map(col):_*)
+				val parquet_DF = spark.read.format("parquet").load(args(4)).select(Col_List.map(col):_*)
 				parquet_DF.show()
 
 				println()
 
 				//9.Read file 6 as xml with row tag as txndata
-				val xml_DF = spark.read.format("com.databricks.spark.xml").option("rowTag","txndata").load("file:///C:/Data/rev_data/file6").select(Col_List.map(col):_*)
+				val xml_DF = spark.read.format("com.databricks.spark.xml").option("rowTag","txndata").load(args(5)).select(Col_List.map(col):_*)
 				xml_DF.show()
 
 				//10.Define a unified column list and impose using select and Union all the dataframes
@@ -114,6 +114,6 @@ def main(args:Array[String]):Unit =
 				res_DF1.show()
 
 				//12.Write as an avro in local with mode Append and partition the category column
-				res_DF1.write.format("com.databricks.spark.avro").partitionBy("category").mode("append").save("file:///D:/D Data/ResultDir/Revision_Outputs/res_avro")
+				res_DF1.write.format("com.databricks.spark.avro").partitionBy("category").mode("append").save(args(6))
 }
 }
