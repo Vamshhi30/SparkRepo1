@@ -2,6 +2,7 @@ package com.vamshhi.spark
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.IntegerType
 
 object SparkPractice1 
 {
@@ -89,5 +90,42 @@ object SparkPractice1
 						//multiple condition:
 						val txns_DF15 = txns_DF.withColumn("check",expr("case when spendby = 'credit' then 1 when spendby = 'cash' then 0 else 'NA' end"))
 						txns_DF15.show()
+
+						//Aggregations 
+						//(5). DF.groupBy(),DF.agg()
+						val txndf = spark.read.format("csv").option("header","true").option("inferchema","true").load("file:///C:/Data/txns")
+						txndf.show()
+
+						//sum
+						val agg_df1 = txndf.groupBy("category").agg(sum("amount").alias("sum_amount"))
+						agg_df1.show()
+
+						//max
+						val agg_df2 = txndf.groupBy("category").agg(max("amount").alias("max_amount"))
+						agg_df2.show()
+
+						//min
+						val agg_df3 = txndf.groupBy("category").agg(min("amount").alias("min_amount"))
+						agg_df3.show()
+
+						//avg
+						val agg_df4 = txndf.groupBy("category").agg(avg("amount").alias("avg_amount"))
+						agg_df4.show()
+
+						//count
+						val agg_df5 = txndf.groupBy("category").agg(count("amount").alias("count"))
+						agg_df5.show()
+
+						//multi grouping and single aggregation
+						val agg_df6 = txndf.groupBy("category","product").agg(sum("amount").alias("total_amount"))
+						agg_df6.show()
+
+						//single grouping and multiple aggregation
+						val agg_df7 = txndf.groupBy("category").agg(sum("amount").alias("sum_amount"),avg("amount").alias("avg_amount"),max("amount").alias("max_amount"),min("amount").alias("min_amountt"),count("amount").alias("count"))
+						agg_df7.show()
+
+						//multi grouping and multiple aggregation
+						val agg_df8 = txndf.groupBy("category","product").agg(sum("amount").alias("sum_amount"),avg("amount").alias("avg_amount"),max("amount").alias("max_amount"),min("amount").alias("min_amountt"),count("amount").alias("count"))
+						agg_df8.show()				
 		}
 }
