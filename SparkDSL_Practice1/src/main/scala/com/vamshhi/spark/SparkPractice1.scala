@@ -1,5 +1,7 @@
 package com.vamshhi.spark
 
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.IntegerType
@@ -7,8 +9,11 @@ import org.apache.spark.sql.types.IntegerType
 object SparkPractice1 
 {
 	def main(args:Array[String]):Unit =
-		{
-				val spark = SparkSession.builder().appName("Spark DSL Practice").master("local[*]").getOrCreate()
+		{  
+				val Conf = new SparkConf().setAppName("Spark DSL APIs").setMaster("local[*]")
+						val sc = new SparkContext(Conf)
+						sc.setLogLevel("Error")
+						val spark = SparkSession.builder().appName("Spark DSL Practice").master("local[*]").getOrCreate()
 						val txns_DF = spark.read.format("csv").option("header","true").option("inferschema","true").load("file:///C:/Data/txns")
 						txns_DF.show()
 
@@ -126,6 +131,30 @@ object SparkPractice1
 
 						//multi grouping and multiple aggregation
 						val agg_df8 = txndf.groupBy("category","product").agg(sum("amount").alias("sum_amount"),avg("amount").alias("avg_amount"),max("amount").alias("max_amount"),min("amount").alias("min_amountt"),count("amount").alias("count"))
-						agg_df8.show()				
+						agg_df8.show()		
+
+						//(6).Joins
+						//inner,left outer,right outer,full outer
+						println("==================file1.csv======================")
+						val tdf1 = spark.read.format("csv").option("header","true").option("inferschema","true").load("file:///C:/Data/f1.csv") 
+						tdf1.show()
+						println("==================file2.csv======================")
+						val tdf2 = spark.read.format("csv").option("header","true").option("inferschema","true").load("file:///C:/Data/f2.csv")
+						tdf2.show()
+						println("==================inner join======================")
+						val tdf_ij = tdf1.join(tdf2,Seq("txnno"),"inner")
+						tdf_ij.show()
+						println("==================left outer join======================")
+						val tdf_loj = tdf1.join(tdf2,Seq("txnno"),"left")
+						tdf_loj.show()
+						println("==================right outer join======================")
+						val tdf_roj = tdf1.join(tdf2,Seq("txnno"),"right")
+						tdf_roj.show()
+						println("==================full outer join======================")
+						val tdf_foj = tdf1.join(tdf2,Seq("txnno"),"full")
+						tdf_foj.show()
+						println("==================left-anti join======================")
+						val tdf_laj = tdf1.join(tdf2,Seq("txnno"),"leftanti")
+						tdf_laj.show()		
 		}
 }
