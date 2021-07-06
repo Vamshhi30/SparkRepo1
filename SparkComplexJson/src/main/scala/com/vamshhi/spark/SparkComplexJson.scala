@@ -20,7 +20,7 @@ object SparkComplexJson
 					val randomUserDF = spark.read.json(randomUserRDD)
 
 					println("======================Raw Complex Json==========================")
-					randomUserDF.show(false)
+					//randomUserDF.show(false)
 					randomUserDF.printSchema()
 
 					println("======================Flattening Complex Json==========================")
@@ -48,6 +48,7 @@ object SparkComplexJson
 
 					flattenDF.show(false)
 					flattenDF.printSchema()
+					//flattenDF.coalesce(1).write.format("json").mode("overwrite").save("file:///C:/Data/complexjson/randomUserJson")
 
 					println("======================Reverting Back to Complex Json==========================")
 					val ComplexDF = flattenDF.select(
@@ -91,7 +92,7 @@ object SparkComplexJson
 							col("seed"),
 							col("version")
 							)
-					ComplexDF1.show(false)
+					//ComplexDF1.show(false)
 					ComplexDF1.printSchema()
 	}
 }
