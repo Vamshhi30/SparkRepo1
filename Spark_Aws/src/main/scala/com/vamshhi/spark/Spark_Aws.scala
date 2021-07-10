@@ -23,6 +23,14 @@ object Spark_Aws {
 
 					res_df.coalesce(1).write.format("csv").option("header","true").mode("overwrite").save("file:///D:/D Data/ResultDir/Vamshhi_Dir")
 					println("====================Data Written to S3=============================")
-	}
 
+					//String interpolation
+					val Name = "Vamshhi"
+					val Occupation = "Software Engineer"
+					val Company = "Tata Consultancy Services"
+					val phoneNum = "8977342394"
+
+					println(s"Hi! This is $Name,Currently working as $Occupation at $Company. My Contact Number is $phoneNum")
+
+	}
 }
