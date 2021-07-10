@@ -18,7 +18,8 @@ object SparkComplexDataProcessing
 						sc.setLogLevel("Error")
 
 						//avro dataset read
-						val avro_df = spark.read.format("com.databricks.spark.avro").load("file:///C:/Data/Spark Project (Phase 1) Dataset/part-00000-1bd5ec9a-4ceb-448c-865f-305f43a0b8a9-c000.avro")
+						val avro_df = spark.read.format("com.databricks.spark.avro")
+						.load("file:///C:/Data/Spark Project (Phase 1) Dataset/part-00000-1bd5ec9a-4ceb-448c-865f-305f43a0b8a9-c000.avro")
 						println("=====================================Raw Avro DF======================================")
 						avro_df.show(false)
 
@@ -98,7 +99,7 @@ object SparkComplexDataProcessing
 						available_cust_json.printSchema()
 						available_cust_json.coalesce(1).write.format("json").mode("overwrite").save("file:///D:/D Data/ResultDir/Spark Project1_Phase_dir/available_cust")
 						println("==============Data Written=============")
-						
+
 						val non_available_cust_json = non_available_custDF.groupBy("username").agg(
 								collect_list("ip").alias("ip"),
 								collect_list("id").alias("id"),
