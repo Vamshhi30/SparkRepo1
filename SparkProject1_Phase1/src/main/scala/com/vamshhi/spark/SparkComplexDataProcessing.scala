@@ -64,7 +64,7 @@ object SparkComplexDataProcessing
 						flattenDF.show(false)
 						flattenDF.printSchema()
 
-						val flattenDF1 = flattenDF.withColumn("username",regexp_replace(col("username"),"\\d",""))
+						val flattenDF1 = flattenDF.withColumn("username",regexp_replace(col("username"),"([0-9])",""))
 						println("=====================================Final flattenDF Json DF=========================================")
 						flattenDF1.show(false)
 
