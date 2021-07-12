@@ -19,7 +19,7 @@ object SparkComplexDataProcessing
 						sc.setLogLevel("Error")
 						val hc = new HiveContext(sc)
 						import hc.implicits._
-
+						//============================Spark Phase 1 ==========================
 						//avro dataset read
 						val yest_date = java.time.LocalDate.now.minusDays(1).toString()
 						//local
@@ -30,6 +30,7 @@ object SparkComplexDataProcessing
 						.load(s"hdfs:/user/cloudera/$yest_date")
 						println("=====================================Raw Avro DF======================================")
 						//avro_df.show(false)
+						avro_df.printSchema()
 
 						//randomuser API Complex Json read
 						val randomAPI_url = Source.fromURL("https://randomuser.me/api/0.8/?results=200").mkString
@@ -74,7 +75,6 @@ object SparkComplexDataProcessing
 						val df_join1 = df_join.select("id","username","amount","ip","createdt","value","score","regioncode","status","method","key","count","type","site","statuscode","nationality","cell","dob","email","city","state",
 								"street","zip","md5","first","last","title","password","phone","large","medium","thumbnail","registered","salt","sha1","sha256","seed","version")
 
-
 						println("=====================================Joined DF=========================================")
 						df_join1.show(false)
 						//println(avro_df.count())
@@ -96,7 +96,7 @@ object SparkComplexDataProcessing
 						val non_available_cust1 = non_available_cust.na.fill("NA").na.fill(0)
 						val non_available_custDF = non_available_cust1.withColumn("today",current_date())
 						non_available_custDF.show(false)
-						df_join.unpersist()
+						df_join1.unpersist()
 
 						val available_cust_json = available_custDF.groupBy("username").agg(
 								collect_list("ip").alias("ip"),
