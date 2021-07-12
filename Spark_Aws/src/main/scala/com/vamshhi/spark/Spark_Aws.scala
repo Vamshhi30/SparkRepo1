@@ -12,7 +12,7 @@ object Spark_Aws {
 
 			val Conf = new SparkConf().setAppName("Spark AWS").setMaster("local[*]")
 					val sc = new SparkContext(Conf)
-					val spark = SparkSession.builder().config("fs.s3a.access.key","AKIAQJ35YRX5HBXC5N7P").config("fs.s3a.secret.key","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").getOrCreate()
+					val spark = SparkSession.builder().config("fs.s3a.access.key","AKIAQJ35YRX5PAJ6XS3H").config("fs.s3a.secret.key","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").getOrCreate()
 					sc.setLogLevel("Error")
 					val df = spark.read.format("parquet").load("s3a://zeyonifibucket/cashdata_parquet/part-00000-5e2a219f-21ea-454c-9c18-8859c6df617f-c000.snappy.parquet")
 					df.show(false)
