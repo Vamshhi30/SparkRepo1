@@ -29,7 +29,7 @@ object SparkComplexDataProcessing
 						val avro_df = spark.read.format("com.databricks.spark.avro")
 						.load(s"hdfs:/user/cloudera/$yest_date")
 						println("=====================================Raw Avro DF======================================")
-						//avro_df.show(false)
+						avro_df.show(false)
 						avro_df.printSchema()
 
 						//randomuser API Complex Json read
@@ -46,12 +46,20 @@ object SparkComplexDataProcessing
 								col("results.user.cell"),
 								col("results.user.dob"),
 								col("results.user.email"),
-								col("results.user.location.*"),
+								col("results.user.gender"),
+								col("results.user.location.city"),
+								col("results.user.location.state"),
+								col("results.user.location.street"),
+								col("results.user.location.zip"),
 								col("results.user.md5"),
-								col("results.user.name.*"),
+								col("results.user.name.first"),
+								col("results.user.name.last"),
+								col("results.user.name.title"),
 								col("results.user.password"),
 								col("results.user.phone"),
-								col("results.user.picture.*"),
+								col("results.user.picture.large"),
+								col("results.user.picture.medium"),
+								col("results.user.picture.thumbnail"),
 								col("results.user.registered"),
 								col("results.user.salt"),
 								col("results.user.sha1"),
@@ -72,21 +80,18 @@ object SparkComplexDataProcessing
 
 						val df_join = avro_df.join(broadcast(flattenDF1),Seq("username"),"left")
 
-						val df_join1 = df_join.select("id","username","amount","ip","createdt","value","score","regioncode","status","method","key","count","type","site","statuscode","nationality","cell","dob","email","city","state",
-								"street","zip","md5","first","last","title","password","phone","large","medium","thumbnail","registered","salt","sha1","sha256","seed","version")
-
 						println("=====================================Joined DF=========================================")
-						df_join1.show(false)
+						df_join.show(false)
 						//println(avro_df.count())
 						//println(flattenDF1.count())
 						//println(df_join1.count())
-						df_join1.printSchema()
+						df_join.printSchema()
 
-						df_join1.persist()
+						df_join.persist()
 
-						val available_cust = df_join1.filter(col("nationality").isNotNull)
+						val available_cust = df_join.filter(col("nationality").isNotNull)
 
-						val non_available_cust = df_join1.filter(col("nationality").isNull)
+						val non_available_cust = df_join.filter(col("nationality").isNull)
 
 						println("=====================================available_cust DF=========================================")
 						val available_custDF = available_cust.withColumn("today",current_date())
@@ -96,7 +101,7 @@ object SparkComplexDataProcessing
 						val non_available_cust1 = non_available_cust.na.fill("NA").na.fill(0)
 						val non_available_custDF = non_available_cust1.withColumn("today",current_date())
 						non_available_custDF.show(false)
-						df_join1.unpersist()
+						df_join.unpersist()
 
 						val available_cust_json = available_custDF.groupBy("username").agg(
 								collect_list("ip").alias("ip"),
@@ -135,15 +140,18 @@ object SparkComplexDataProcessing
 
 						//============================Spark Phase 2 ==========================
 
-						val df_join_withIndex = addIndexColumn(spark,df_join1).withColumn("id",col("index")).drop("index").na.fill("NA").na.fill(0)
-						//df_join_withIndex.show(false)
-						//df_join_withIndex.printSchema()
+						val df_join_withIndex = addIndexColumn(spark,df_join).withColumn("id",col("index")).drop("index").na.fill("NA").na.fill(0)
+
+						//val df_join_withIndex1 = df_join_withIndex.select("id","username","amount","ip","createdt","value","score","regioncode","status","method","key","count","type","site","statuscode","nationality","cell","dob","email","gender",
+						//"city","state","street","md5","first","last","title","password","phone","large","medium","thumbnail","registered","salt","sha1","sha256","seed","version")
+						//df_join_withIndex1.show(false)
+						//df_join_withIndex1.printSchema()
 
 						//retrieving max id value from hive table
-						val max_id = hc.sql("select max(id) as max_id from webapi_db.webapihive_tab")
-						max_id.createOrReplaceTempView("max_tab")
-						val max_id_check = hc.sql("select coalesce(max_id,0) as max_id from max_tab")
-						val max_id_val = max_id_check.collect().map(x=>x.mkString("")).mkString("").toInt
+						val max_id = hc.sql("select coalesce(max(id),0) as max_id from webapi_db.webapihive_tab")
+						//max_id.createOrReplaceTempView("max_tab")
+						//val max_id_check = hc.sql("select coalesce(max_id,0) as max_id from max_tab")
+						val max_id_val = max_id.collect().map(x=>x.mkString("")).mkString("").toInt
 
 						val df_join_final = df_join_withIndex.withColumn("id",col("id")+max_id_val)
 						df_join_final.show(false)
