@@ -33,7 +33,7 @@ object SparkComplexDataProcessing
 						avro_df.printSchema()
 
 						//randomuser API Complex Json read
-						val randomAPI_url = Source.fromURL("https://randomuser.me/api/0.8/?results=200").mkString
+						val randomAPI_url = Source.fromURL("https://randomuser.me/api/0.8/?results=1000").mkString
 						val randomAPI_rdd = sc.parallelize(List(randomAPI_url))
 						val randomAPI_df = spark.read.json(randomAPI_rdd)
 						println("=====================================randomAPI_df Raw Complex Json======================================")
@@ -87,8 +87,6 @@ object SparkComplexDataProcessing
 						//println(df_join1.count())
 						df_join.printSchema()
 
-						df_join.persist()
-
 						val available_cust = df_join.filter(col("nationality").isNotNull)
 
 						val non_available_cust = df_join.filter(col("nationality").isNull)
@@ -101,7 +99,6 @@ object SparkComplexDataProcessing
 						val non_available_cust1 = non_available_cust.na.fill("NA").na.fill(0)
 						val non_available_custDF = non_available_cust1.withColumn("today",current_date())
 						non_available_custDF.show(false)
-						df_join.unpersist()
 
 						val available_cust_json = available_custDF.groupBy("username").agg(
 								collect_list("ip").alias("ip"),
@@ -141,16 +138,12 @@ object SparkComplexDataProcessing
 						//============================Spark Phase 2 ==========================
 
 						val df_join_withIndex = addIndexColumn(spark,df_join).withColumn("id",col("index")).drop("index").na.fill("NA").na.fill(0)
-
-						//val df_join_withIndex1 = df_join_withIndex.select("id","username","amount","ip","createdt","value","score","regioncode","status","method","key","count","type","site","statuscode","nationality","cell","dob","email","gender",
-						//"city","state","street","md5","first","last","title","password","phone","large","medium","thumbnail","registered","salt","sha1","sha256","seed","version")
-						//df_join_withIndex1.show(false)
-						//df_join_withIndex1.printSchema()
+						df_join_withIndex.show(false)
+						df_join_withIndex.printSchema()
 
 						//retrieving max id value from hive table
 						val max_id = hc.sql("select coalesce(max(id),0) as max_id from webapi_db.webapihive_tab")
-						//max_id.createOrReplaceTempView("max_tab")
-						//val max_id_check = hc.sql("select coalesce(max_id,0) as max_id from max_tab")
+						max_id.createOrReplaceTempView("max_tab")
 						val max_id_val = max_id.collect().map(x=>x.mkString("")).mkString("").toInt
 
 						val df_join_final = df_join_withIndex.withColumn("id",col("id")+max_id_val)
