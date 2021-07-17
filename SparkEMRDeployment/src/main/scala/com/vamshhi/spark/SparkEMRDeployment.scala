@@ -7,7 +7,7 @@ object SparkEMRDeployment {
 
 	def main(args:Array[String]):Unit = {
 
-			val spark = SparkSession.builder().master("local[*]").appName("Spark EMR Deployment").config("fs.s3a.access.key","AKIASV27A7AITJT6FBXQ").config("fs.s3a.secret.key","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").getOrCreate()
+			val spark = SparkSession.builder().master("local[*]").appName("Spark EMR Deployment").config("fs.s3a.access.key","").config("fs.s3a.secret.key","").getOrCreate()
 					val sc = spark.sparkContext
 					sc.setLogLevel("Error")
 
