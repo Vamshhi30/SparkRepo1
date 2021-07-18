@@ -1,0 +1,116 @@
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+from datetime import *
+import urllib.request
+
+spark = SparkSession.builder.appName("Spark Project 1").master("local[*]").enableHiveSupport().getOrCreate()
+sc = spark.sparkContext
+sc.setLogLevel("Error")
+
+#yesterday's date
+yest_date =  str(date.today() - timedelta(days = 1))
+#print(yest_date)
+
+#Reading avro dataset from hdfs path
+avro_df = spark.read.format("com.databricks.spark.avro").load("hdfs:/user/cloudera/{}".format(yest_date))
+print("=====================================Raw Avro DF======================================")
+avro_df.show(5)
+avro_df.printSchema()
+req = urllib.request.Request(url='https://randomuser.me/api/0.8/?results=1000')
+f = urllib.request.urlopen(req)
+urldata = f.read().decode('utf-8')
+url_rdd = sc.parallelize([urldata])
+randomAPI_df = spark.read.json(url_rdd)
+
+print("=====================================randomAPI_df Raw Complex Json======================================")
+randomAPI_df.show()
+randomAPI_df.printSchema()
+
+flattenDF = randomAPI_df.withColumn("results",explode(col("results"))).select(
+								col("nationality"),
+								col("results.user.cell"),
+								col("results.user.dob"),
+								col("results.user.email"),
+								col("results.user.gender"),
+								col("results.user.location.city"),
+								col("results.user.location.state"),
+								col("results.user.location.street"),
+								col("results.user.location.zip"),
+								col("results.user.md5"),
+								col("results.user.name.first"),
+								col("results.user.name.last"),
+								col("results.user.name.title"),
+								col("results.user.password"),
+								col("results.user.phone"),
+								col("results.user.picture.large"),
+								col("results.user.picture.medium"),
+								col("results.user.picture.thumbnail"),
+								col("results.user.registered"),
+								col("results.user.salt"),
+								col("results.user.sha1"),
+								col("results.user.sha256"),
+								col("results.user.username"),
+								col("seed"),
+								col("version")
+								)
+print("=====================================flattenDF Json DF=========================================")
+flattenDF.show()
+flattenDF.printSchema()
+
+flattenDF1 = flattenDF.withColumn("username",regexp_replace(col("username"),"([0-9])",""))
+print("=====================================Final flattenDF Json DF=========================================")
+flattenDF1.show()
+
+df_join = avro_df.join(broadcast(flattenDF1),avro_df.username==flattenDF1.username,"left").drop(flattenDF1.username).withColumn("id",col("id").cast(IntegerType()))
+
+print("=====================================Joined DF=========================================")
+df_join.show()
+df_join.printSchema()
+
+available_custDF = df_join.filter(col("nationality").isNotNull())
+non_available_cust = df_join.filter(col("nationality").isNull())
+
+print("=====================================available_cust DF=========================================")
+available_custDF.show()
+print("=====================================non_available_cust DF=========================================")
+non_available_cust1 = non_available_cust.na.fill("NA").na.fill(0)
+non_available_custDF = non_available_cust1.withColumn("today",current_date())
+non_available_custDF.show()
+
+available_cust_json = available_custDF.groupBy("username").agg(
+								collect_list("ip").alias("ip"),
+								collect_list("id").alias("id"),
+								sum("amount").alias("total_amount"),
+								struct(
+										count("ip").alias("ip_count"),
+										count("id").alias("id_count")
+										).alias("count")
+								)
+available_cust_json.show()
+available_cust_json.printSchema()
+
+available_cust_json.coalesce(1).write.format("json").mode("overwrite").save("hdfs:/user/cloudera/PySpark_Project_dir/available_cust")
+print("==============available_cust Data Written=============")
+
+non_available_cust_json = non_available_custDF.groupBy("username").agg(
+								collect_list("ip").alias("ip"),
+								collect_list("id").alias("id"),
+								sum("amount").alias("total_amount"),
+								struct(
+										count("ip").alias("ip_count"),
+										count("id").alias("id_count")
+										).alias("count")
+								)
+non_available_cust_json.coalesce(1).write.format("json").mode("overwrite").save("hdfs:/user/cloudera/PySpark_Project_dir/non_available_cust")
+print("==============non_available_cust Data Written=============")
+
+df_join_withIndex = df_join.withColumn("index",monotonically_increasing_id()).withColumn("id",col("index")).drop("index").na.fill("NA").na.fill(0)
+df_join_withIndex.show()
+df_join_withIndex.printSchema()
+
+max_id = spark.sql("select coalesce(max(id),0) as max_id from webapi_db1.webapihive_tab1")
+max_id_val = max_id.collect()[0][0]
+df_join_final = df_join_withIndex.withColumn("id",col("id")+max_id_val)
+
+df_join_final.write.format("hive").mode("append").saveAsTable("webapi_db1.webapihive_tab1")
